@@ -6,7 +6,7 @@ const float CURVATURE_COMPENSATION = 1.0;
 const float SCREEN_ZOOM = 1.02;
 const float CHROMATIC_ABERRATION = 2;
 const float EDGE_ABERRATION = 1.75;
-const float SCANLINE_STRENGTH = 0.82;
+const float SCANLINE_STRENGTH = 0.35;
 const float SCANLINE_DENSITY = 4.1;
 const float BEAM_STRENGTH = 0.03;
 const float BEAM_SPEED = 0.6;
@@ -19,7 +19,7 @@ const float VERTICAL_ROLL_SPEED = 3.0;
 const float VERTICAL_ROLL_BAND_SIZE = 0.03;
 const float MASK_BASE = 0.975;
 const float MASK_BOOST = 1.025;
-const float COLOR_FADE = 0.4;
+const float COLOR_FADE = 0.5;
 const float CENTER_BEAM_STRENGTH = 0.08;
 const float CENTER_BEAM_RADIUS = 0.42;
 const float CENTER_BEAM_SOFTNESS = 2.2;
@@ -44,8 +44,9 @@ const vec3 RETENTION_TINT = vec3(0.85, 1.0, 0.88);
 const float NOISE_STRENGTH = 0.0;
 const float NOISE_SPEED = 0.0;
 const float BASE_MIX = 0.985;
+const float TEXT_CONTRAST_BOOST = 1.08;
 const float LIGHT_THEME_COMPENSATION = 0.85;
-const float DARKENING_STRENGTH = 0.82;
+const float DARKENING_STRENGTH = 0.35;
 const float BLACK_LEVEL_LIFT = 0.035;
 
 float hash(vec2 p) {
@@ -239,6 +240,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     color += noise * effectAmount;
     color = max(color, iBackgroundColor * BLACK_LEVEL_LIFT);
     color = mix(color, originalColor, 0.35 * lightTheme);
+    color = iBackgroundColor + (color - iBackgroundColor) * TEXT_CONTRAST_BOOST;
     color = mix(iBackgroundColor, color, BASE_MIX);
     color = clamp(color, 0.0, 1.0);
 
