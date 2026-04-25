@@ -42,4 +42,5 @@ A custom CRT-style shader for [Ghostty](https://ghostty.org/).
 ## Notes
 
 - Use an absolute path if `~` expansion does not work in your setup.
+- Adjust `EDGE_PADDING` in `crt.glsl` to change the visible inset around the terminal content.
 - To disable the effect, remove or comment out the `custom-shader` line from your Ghostty config.
