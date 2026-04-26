@@ -3,7 +3,6 @@
 
 const float CURVATURE = 0.024;
 const float SCREEN_ZOOM = 1.018;
-const float EDGE_PADDING = 16.0;
 const float CHROMATIC_ABERRATION = 1.55;
 const float SCANLINE_STRENGTH = 0.16;
 const float SCANLINE_DENSITY = 2.35;
@@ -151,8 +150,8 @@ float analogNoise(vec2 fragCoord, vec2 uv, vec2 resolution, float time) {
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    vec2 paddedResolution = max(iResolution.xy - vec2(EDGE_PADDING * 2.0), vec2(1.0));
-    vec2 uv = (fragCoord - vec2(EDGE_PADDING)) / paddedResolution;
+    vec2 resolution = iResolution.xy;
+    vec2 uv = fragCoord / resolution;
 
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
         fragColor = vec4(iBackgroundColor, 1.0);
@@ -160,9 +159,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     }
 
     vec2 warpedUv = crtWarp(uv);
-    vec2 texel = 1.0 / paddedResolution;
+    vec2 texel = 1.0 / resolution;
     float edge = edgeFactor(uv);
-    vec2 contentCoord = uv * paddedResolution;
+    vec2 contentCoord = uv * resolution;
 
     float jitterY = contentCoord.y + iTime * JITTER_VERTICAL_SPEED;
     float row = floor(jitterY);
@@ -171,13 +170,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float lineNoise = hash(vec2(row * JITTER_DENSITY, fastFrame));
     float lineNoiseNext = hash(vec2((row + 1.0) * JITTER_DENSITY, fastFrame + 17.0));
     float fineJitter = mix(lineNoise, lineNoiseNext, 0.35) * 2.0 - 1.0;
-    float waveY = uv.y * paddedResolution.y + iTime * JITTER_VERTICAL_SPEED;
+    float waveY = uv.y * resolution.y + iTime * JITTER_VERTICAL_SPEED;
     float waveJitter = sin(waveY * 0.068 + iTime * 10.5)
         + 0.5 * sin(waveY * 0.019 - iTime * 5.2);
     waveJitter *= 0.5;
     float burstCenter = hash(vec2(slowFrame, 41.7));
     float burstWidth = mix(0.014, 0.065, hash(vec2(slowFrame, 93.2)));
-    float burstY = fract(uv.y + iTime * JITTER_VERTICAL_SPEED / paddedResolution.y);
+    float burstY = fract(uv.y + iTime * JITTER_VERTICAL_SPEED / resolution.y);
     float burstDist = abs(burstY - burstCenter);
     burstDist = min(burstDist, 1.0 - burstDist);
     float burstBand = smoothstep(burstWidth, 0.0, burstDist);
@@ -202,7 +201,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     vec3 originalColor = color;
 
-    float scanlineY = warpedUv.y * paddedResolution.y - iTime * SCANLINE_SPEED;
+    float scanlineY = warpedUv.y * resolution.y - iTime * SCANLINE_SPEED;
     float scan = 1.0 - SCANLINE_STRENGTH * (0.5 + 0.5 * sin(scanlineY * SCANLINE_DENSITY));
     float linePhase = fract(scanlineY / HORIZONTAL_LINE_SPACING);
     float lineDistance = abs(linePhase - 0.5);
@@ -212,7 +211,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         lineDistance
     );
     float horizontalRaster = 1.0 - HORIZONTAL_LINE_STRENGTH * horizontalLine;
-    float beam = 1.0 - BEAM_STRENGTH * (0.5 + 0.5 * sin((warpedUv.y + iTime * BEAM_SPEED) * paddedResolution.y * BEAM_DENSITY));
+    float beam = 1.0 - BEAM_STRENGTH * (0.5 + 0.5 * sin((warpedUv.y + iTime * BEAM_SPEED) * resolution.y * BEAM_DENSITY));
     float flicker = 1.0 + FLICKER_STRENGTH * sin(iTime * FLICKER_SPEED);
 
     float phosphorPhase = fract(contentCoord.x / 3.0);
@@ -244,7 +243,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 barrelDelta = warpedUv * 2.0 - 1.0;
     float barrelEdge = smoothstep(0.45, 1.15, dot(barrelDelta, barrelDelta));
     float barrelShade = 1.0 - BARREL_EDGE_DARKENING * pow(barrelEdge, BARREL_EDGE_SOFTNESS);
-    float noise = analogNoise(contentCoord, uv, paddedResolution, iTime) * NOISE_STRENGTH;
+    float noise = analogNoise(contentCoord, uv, resolution, iTime) * NOISE_STRENGTH;
 
     color *= scan * horizontalRaster * beam * flicker * phosphor * vignette * barrelShade;
     color = mix(color, color * BURN_COLOR, burnMask * BURN_STRENGTH * 0.45);
